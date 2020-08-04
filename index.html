@@ -92,6 +92,17 @@
       }
     }
 
+    function handleToggleTodo (id) {
+      return (dispatch) => {
+        dispatch(toggleTodoAction(id))
+        return API.saveTodoToggle(id)
+                .catch(() => {
+                  dispatch(toggleTodoAction(id))
+                  alert("An error occurred, try again.")
+                })
+      }
+    }
+
     function handleDeleteGoal (goal) {
       return (dispatch) => {
         dispatch(removeGoalAction(goal.id))
@@ -113,6 +124,18 @@
                 .catch(() => {
                   alert("There was an error, try again.")
                 })
+      }
+    }
+
+    function handleInitialData() {
+      return (dispatch) => {
+        //Udacity fetched it this way:
+        Promise.all([
+          API.fetchTodos(),
+          API.fetchGoals()
+        ]).then(([ todos, goals ]) => {
+          dispatch(receiveDataAction(todos, goals))
+        })
       }
     }
 
@@ -222,12 +245,7 @@
       }
 
       toggleItem = (id) => {
-        this.props.store.dispatch(toggleTodoAction(id))
-        return API.saveTodoToggle(id)
-                .catch(() => {
-                  this.props.store.dispatch(toggleTodoAction(id))
-                  alert("An error occurred, try again.")
-                })
+        this.props.store.dispatch(handleToggleTodo(id))
       }
 
       render() {
@@ -289,20 +307,9 @@
       componentDidMount() {
         const {store} = this.props
 
-        store.subscribe(() => this.forceUpdate())
-        const fetchedToDos = API.fetchTodos()
-        const fetchedGoals = API.fetchGoals()
-        console.group("Fetched:")
-          console.log(fetchedGoals)
-          console.log(fetchedToDos)
+        store.dispatch(handleInitialData())
 
-        //Udacity fetched it this way:
-        Promise.all([
-          API.fetchTodos(),
-          API.fetchGoals()
-        ]).then(([ todos, goals ]) => {
-          store.dispatch(receiveDataAction(todos, goals))
-        })
+        store.subscribe(() => this.forceUpdate())
       }
 
       render() {
